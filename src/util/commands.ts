@@ -1,7 +1,6 @@
 import {
   ApplicationCommand,
   Awaited,
-  ChatInputApplicationCommandData,
   Client,
   Collection,
   CommandInteraction,
@@ -10,8 +9,21 @@ import {
 } from 'discord.js-light'
 import requireAll from 'require-all'
 import path from 'path'
+import {
+  SlashCommandBuilder,
+  SlashCommandSubcommandGroupsOnlyBuilder,
+  SlashCommandSubcommandsOnlyBuilder
+} from '@discordjs/builders'
+import { REST } from '@discordjs/rest'
+import { Routes } from 'discord-api-types/v9'
 
-export interface CommandOptions extends ChatInputApplicationCommandData {
+export { SlashCommandBuilder } from '@discordjs/builders'
+
+export interface CommandOptions {
+  data:
+    | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+    | SlashCommandSubcommandsOnlyBuilder
+    | SlashCommandSubcommandGroupsOnlyBuilder
   guildID?: Snowflake
   run?: (interaction: CommandInteraction) => Awaited<void>
 }
@@ -19,6 +31,7 @@ export interface CommandOptions extends ChatInputApplicationCommandData {
 export class CommandHandler {
   private commands: Collection<Snowflake, CommandOptions>
   client: Client
+  rest: REST
 
   constructor(client: Client) {
     this.client = client
@@ -32,14 +45,18 @@ export class CommandHandler {
       if (!cmd)
         throw new Error('Client has received an unregistered slash command.')
 
-      console.log(`> ${cmd.name}`)
+      console.log(`> ${cmd.data.name}`)
       await cmd.run(interaction)
     })
+
+    this.rest = new REST({ version: '9' })
   }
 
   async registerCommands() {
     if (this.commands.size)
       throw new Error('The commands collection has already been initialized.')
+
+    this.rest.setToken(this.client.token)
 
     const commands: CommandOptions[] = Object.values(
       requireAll({
@@ -56,8 +73,12 @@ export class CommandHandler {
       const guildID = command.guildID || 'global'
 
       if (groupedByGuild[guildID]) {
-        if (groupedByGuild[guildID].find((c) => c.name == command.name))
-          throw new Error(`Duplicate '${command.name}' command for ${guildID}.`)
+        if (
+          groupedByGuild[guildID].find((c) => c.data.name == command.data.name)
+        )
+          throw new Error(
+            `Duplicate '${command.data.name}' command for ${guildID}.`
+          )
 
         groupedByGuild[guildID].push(command)
       } else groupedByGuild[guildID] = [command]
@@ -66,16 +87,17 @@ export class CommandHandler {
     console.log(groupedByGuild)
     const everyCommandByID = new Collection<Snowflake, CommandOptions>()
     for (const guildID in groupedByGuild) {
-      let added: Collection<
-        string,
-        ApplicationCommand<{ guild: GuildResolvable }>
-      >
+      let added:
+        | any[]
+        | Collection<string, ApplicationCommand<{ guild: GuildResolvable }>>
       const guildCommands = groupedByGuild[guildID]
 
       if (guildID == 'global') {
-        added = await this.client.application.commands.set(
-          guildCommands.map(this.getAPIForm)
+        await this.rest.put(
+          Routes.applicationCommands(this.client.application.id),
+          { body: guildCommands.map((c) => c.data.toJSON()) }
         )
+        added = await this.client.application.commands.fetch()
       } else {
         const guild = await this.client.guilds.fetch(guildID)
         if (!guild)
@@ -83,11 +105,15 @@ export class CommandHandler {
             `Commands have been assigned to guild ${guildID}, but it can't be fetched.`
           )
 
-        added = await guild.commands.set(guildCommands.map(this.getAPIForm))
+        await this.rest.put(
+          Routes.applicationGuildCommands(this.client.application.id, guildID),
+          { body: guildCommands.map((c) => c.data.toJSON()) }
+        )
+        added = await guild.commands.fetch()
       }
 
       added.forEach((cmd) => {
-        const cmdOptions = guildCommands.find((c) => c.name == cmd.name)
+        const cmdOptions = guildCommands.find((c) => c.data.name == cmd.name)
         everyCommandByID.set(cmd.id, cmdOptions)
       })
     }
@@ -101,17 +127,8 @@ export class CommandHandler {
 
   find(name: string, guildID?: Snowflake) {
     return (
-      this.commands.find((c) => c.name == name && c.guildID == guildID) ||
-      this.commands.find((c) => c.name == name && !c.guildID)
+      this.commands.find((c) => c.data.name == name && c.guildID == guildID) ||
+      this.commands.find((c) => c.data.name == name && !c.guildID)
     )
-  }
-
-  private getAPIForm(command: CommandOptions): ChatInputApplicationCommandData {
-    return {
-      name: command.name,
-      description: command.description,
-      defaultPermission: command.defaultPermission,
-      options: command.options
-    }
   }
 }

@@ -1,11 +1,13 @@
 import { MessageActionRow, MessageButton } from 'discord.js-light'
 import { v4 as uuid } from 'uuid'
 import { testGuildID } from '../main'
-import { CommandOptions } from '../util/commands'
+import { CommandOptions, SlashCommandBuilder } from '../util/commands'
 
 export const command: CommandOptions = {
-  name: 'button',
-  description: 'A command to test button components.',
+  data: new SlashCommandBuilder()
+    .setName('button')
+    .setDescription('A command to test button components.'),
+
   guildID: testGuildID,
 
   async run(int) {

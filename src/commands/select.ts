@@ -5,11 +5,13 @@ import {
 } from 'discord.js-light'
 import { v4 as uuid } from 'uuid'
 import { testGuildID } from '../main'
-import { CommandOptions } from '../util/commands'
+import { CommandOptions, SlashCommandBuilder } from '../util/commands'
 
 export const command: CommandOptions = {
-  name: 'select',
-  description: 'A command to test select menus.',
+  data: new SlashCommandBuilder()
+    .setName('select')
+    .setDescription('A command to test select menus.'),
+
   guildID: testGuildID,
 
   async run(int) {

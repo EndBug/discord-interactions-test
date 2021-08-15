@@ -1,34 +1,28 @@
 import { testGuildID } from '../main'
-import { CommandOptions } from '../util/commands'
+import { CommandOptions, SlashCommandBuilder } from '../util/commands'
 
 export const command: CommandOptions = {
-  name: 'options',
-  description: 'Options test',
-  guildID: testGuildID,
-  options: [
-    {
-      name: 'string',
-      type: 'STRING',
-      required: true,
-      description: 'Just a custom string'
-    },
-    {
-      name: 'boolean',
-      type: 'BOOLEAN',
-      required: false,
-      description: 'True or false'
-    },
-    {
-      name: 'number',
-      type: 'INTEGER',
-      description: 'Select a number',
-      choices: [
-        { name: 'Green', value: 420 },
-        { name: 'Red', value: 69 }
-      ]
-    }
-  ],
+  data: new SlashCommandBuilder()
+    .setName('options')
+    .setDescription('Options test')
+    .addStringOption((s) =>
+      s
+        .setName('string')
+        .setRequired(true)
+        .setDescription('Just a custom string')
+    )
+    .addBooleanOption((b) =>
+      b.setName('boolean').setDescription('True or false').setRequired(false)
+    )
+    .addIntegerOption((i) =>
+      i
+        .setName('number')
+        .setDescription('Select a number')
+        .addChoice('Green', 420)
+        .addChoice('Red', 69)
+    ),
 
+  guildID: testGuildID,
   run(int) {
     int.reply({
       content: `String: ${int.options.getString(

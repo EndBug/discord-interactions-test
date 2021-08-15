@@ -1,9 +1,11 @@
 import { testGuildID } from '../main'
-import { CommandOptions } from '../util/commands'
+import { CommandOptions, SlashCommandBuilder } from '../util/commands'
 
 export const command: CommandOptions = {
-  name: 'ping',
-  description: 'Just a simple ping-pong command.',
+  data: new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Just a simple ping-pong command.'),
+
   guildID: testGuildID,
 
   run(int) {
