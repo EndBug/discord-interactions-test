@@ -1,4 +1,4 @@
-import { MessageActionRow, MessageButton } from 'discord.js'
+import { MessageActionRow, MessageButton } from 'discord.js-light'
 import { v4 as uuid } from 'uuid'
 import { testGuildID } from '../main'
 import { CommandOptions } from '../util/commands'

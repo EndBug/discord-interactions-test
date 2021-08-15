@@ -1,17 +1,17 @@
 import {
   ApplicationCommand,
-  ApplicationCommandData,
   Awaited,
+  ChatInputApplicationCommandData,
   Client,
   Collection,
   CommandInteraction,
   GuildResolvable,
   Snowflake
-} from 'discord.js'
+} from 'discord.js-light'
 import requireAll from 'require-all'
 import path from 'path'
 
-export interface CommandOptions extends ApplicationCommandData {
+export interface CommandOptions extends ChatInputApplicationCommandData {
   guildID?: Snowflake
   run?: (interaction: CommandInteraction) => Awaited<void>
 }
@@ -106,7 +106,7 @@ export class CommandHandler {
     )
   }
 
-  private getAPIForm(command: CommandOptions): ApplicationCommandData {
+  private getAPIForm(command: CommandOptions): ChatInputApplicationCommandData {
     return {
       name: command.name,
       description: command.description,

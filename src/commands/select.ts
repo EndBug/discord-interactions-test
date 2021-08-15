@@ -2,7 +2,7 @@ import {
   MessageActionRow,
   MessageSelectMenu,
   SelectMenuInteraction
-} from 'discord.js'
+} from 'discord.js-light'
 import { v4 as uuid } from 'uuid'
 import { testGuildID } from '../main'
 import { CommandOptions } from '../util/commands'

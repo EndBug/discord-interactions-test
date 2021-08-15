@@ -1,4 +1,4 @@
-import { Client, Intents } from 'discord.js'
+import { Client, Intents } from 'discord.js-light'
 import { CommandHandler } from './util/commands'
 
 require('dotenv').config()
